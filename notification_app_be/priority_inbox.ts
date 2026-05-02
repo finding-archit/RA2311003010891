@@ -23,6 +23,7 @@ async function main() {
   });
 
   const notifications = res.data.notifications;
+  await Log("backend", "debug", "service", `Fetched ${notifications.length} notifications`);
   console.log(`\nFetched ${notifications.length} notifications\n`);
 
   // Score and sort — highest score = highest priority
@@ -48,4 +49,7 @@ async function main() {
   await Log("backend", "info", "service", "Priority inbox done");
 }
 
-main().catch(console.error);
+main().catch(async (err) => {
+  await Log("backend", "error", "service", String(err).slice(0, 48));
+  console.error(err);
+});

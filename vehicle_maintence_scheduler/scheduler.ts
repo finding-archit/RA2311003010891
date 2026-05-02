@@ -45,6 +45,8 @@ async function main() {
   const tasksRes = await api.get("/evaluation-service/vehicles");
   const tasks = tasksRes.data.vehicles;
 
+  await Log("backend", "debug", "service", `Fetched ${depots.length} depots and ${tasks.length} tasks`);
+
   console.log(`\nDepots: ${depots.length} | Tasks: ${tasks.length}\n`);
   console.log("=".repeat(60));
 
@@ -69,4 +71,7 @@ async function main() {
   await Log("backend", "info", "service", "Scheduler finished");
 }
 
-main().catch(console.error);
+main().catch(async (err) => {
+  await Log("backend", "error", "service", String(err).slice(0, 48));
+  console.error(err);
+});
