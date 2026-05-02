@@ -1,23 +1,17 @@
 {
-  "name": "logging-middleware",
+  "name": "ra2311003010891",
   "version": "1.0.0",
-  "description": "Reusable logging middleware package for backend and frontend applications",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node src/index.ts",
-    "test": "ts-node src/test.ts"
+    "logger": "ts-node logging_middleware/test.ts",
+    "scheduler": "ts-node vehicle_maintence_scheduler/scheduler.ts",
+    "inbox": "ts-node notification_app_be/priority_inbox.ts"
   },
-  "keywords": ["logging", "middleware", "typescript"],
-  "author": "Archit Gupta",
-  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.8"
+  },
   "devDependencies": {
     "typescript": "^5.4.5",
     "@types/node": "^20.12.7",
     "ts-node": "^10.9.2"
-  },
-  "dependencies": {
-    "axios": "^1.6.8"
   }
 }
