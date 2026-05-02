@@ -186,14 +186,8 @@ io.on("connection", (socket) => {
   socket.join(`student_${studentId}`);
 });
 
-// When a new notification is created:
+// Emit when a new notification is created
 io.to(`student_${studentId}`).emit("notification_new", notification);
-
-// Client (Frontend)
-const socket = io(SERVER_URL, { auth: { studentId, token } });
-socket.on("notification_new", (notification) => {
-  updateNotificationBadge(notification);
-});
 ```
 
 **Why WebSocket over SSE or Polling?**
@@ -450,7 +444,7 @@ TTL:   30 seconds
 
 **Cache stampede mitigation:** Use a **mutex lock** (Redis `SET NX`) so only one request rebuilds the cache when it expires.
 
-#### Layer 2 — HTTP Cache Headers (Client-Side)
+#### Layer 2 — HTTP Cache Headers
 
 For the notification list endpoint, return:
 ```
@@ -458,9 +452,9 @@ Cache-Control: private, max-age=30
 ETag: "<hash-of-response>"
 ```
 
-Client caches the response for 30s. On re-request, sends `If-None-Match` header — server returns `304 Not Modified` if nothing changed, saving bandwidth and DB hits.
+On re-request, the API consumer sends `If-None-Match` — server returns `304 Not Modified` if nothing changed, saving bandwidth and DB hits.
 
-**Tradeoff:** Only effective for re-requests from the same client; not shared across users.
+**Tradeoff:** Only effective for repeated requests from the same caller; not shared across users.
 
 #### Layer 3 — DB Read Replicas
 
@@ -657,4 +651,4 @@ The recency score decays towards 0 as the notification ages, so a fresh Event ca
 
 Use a **min-heap of size N**: when a new notification arrives, compute its score. If it's greater than the heap's minimum, push it in and pop the minimum. This is O(log N) per insertion — constant-time maintenance regardless of total notification count.
 
-See `vehicle_scheduling/../notification_app_be/priority_inbox.ts` for the full implementation.
+See `notification_app_be/priority_inbox.ts` for the full implementation.

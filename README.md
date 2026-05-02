@@ -12,23 +12,16 @@ Log(stack, level, package, message)
 
 | Param | Type | Allowed Values |
 |-------|------|----------------|
-| `stack` | `Stack` | `"backend"` \| `"frontend"` |
+| `stack` | `Stack` | `"backend"` |
 | `level` | `Level` | `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"fatal"` |
-| `package` | `Package` | See below |
-| `message` | `string` | Descriptive log message |
-
-### Package Values
-
-- **Backend only**: `cache`, `controller`, `cron_job`, `db`, `domain`, `handler`, `repository`, `route`, `service`
-- **Frontend only**: `api`, `component`, `hook`, `page`, `state`, `style`
-- **Both**: `auth`, `config`, `middleware`, `utils`
+| `package` | `Package` | `cache`, `controller`, `cron_job`, `db`, `domain`, `handler`, `repository`, `route`, `service`, `auth`, `config`, `middleware`, `utils` |
+| `message` | `string` | Descriptive log message (max 48 chars) |
 
 ## Setup
 
 ```bash
 npm install
-npm test      # runs smoke tests against the evaluation service
-npm run build # compiles to dist/
+npm test
 ```
 
 ## Usage
@@ -36,14 +29,11 @@ npm run build # compiles to dist/
 ```typescript
 import { initLogger, Log } from './src';
 
-// Initialise once with your Bearer token
 initLogger({ authToken: 'YOUR_BEARER_TOKEN' });
 
-// Use anywhere in your codebase
-await Log('backend', 'info', 'service', 'Vehicle scheduler service started');
+await Log('backend', 'info', 'service', 'Service started');
 await Log('backend', 'error', 'handler', 'Received string, expected bool');
-await Log('backend', 'fatal', 'db', 'Critical database connection failure.');
-await Log('frontend', 'debug', 'component', 'NotificationList rendered with 20 items');
+await Log('backend', 'fatal', 'db', 'DB connection failure');
 ```
 
 ## Author

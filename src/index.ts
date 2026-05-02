@@ -1,12 +1,10 @@
 import axios, { AxiosInstance } from "axios";
 
-// ─── Valid enum types ────────────────────────────────────────────────────────
-
-export type Stack = "backend" | "frontend";
+export type Stack = "backend";
 
 export type Level = "debug" | "info" | "warn" | "error" | "fatal";
 
-export type BackendPackage =
+export type Package =
   | "cache"
   | "controller"
   | "cron_job"
@@ -15,20 +13,14 @@ export type BackendPackage =
   | "handler"
   | "repository"
   | "route"
-  | "service";
-
-export type FrontendPackage = "api" | "component" | "hook" | "page" | "state" | "style";
-
-export type SharedPackage = "auth" | "config" | "middleware" | "utils";
-
-export type Package = BackendPackage | FrontendPackage | SharedPackage;
-
-// ─── Logger config ───────────────────────────────────────────────────────────
+  | "service"
+  | "auth"
+  | "config"
+  | "middleware"
+  | "utils";
 
 export interface LoggerConfig {
-  /** Bearer token for the evaluation service */
   authToken: string;
-  /** Base URL of the evaluation service */
   baseUrl?: string;
 }
 
@@ -37,10 +29,9 @@ export interface LogResponse {
   message: string;
 }
 
-// ─── Logger class ────────────────────────────────────────────────────────────
-
 class Logger {
   private client: AxiosInstance;
+  private static readonly MAX_MSG_LEN = 48;
 
   constructor(private config: LoggerConfig) {
     this.client = axios.create({
@@ -53,83 +44,34 @@ class Logger {
     });
   }
 
-  /**
-   * Send a structured log entry to the evaluation service.
-   *
-   * @param stack   - "backend" | "frontend"
-   * @param level   - "debug" | "info" | "warn" | "error" | "fatal"
-   * @param pkg     - package identifier (e.g. "handler", "db", "component")
-   * @param message - descriptive log message
-   * @returns       - Promise resolving to { logID, message }
-   */
-  /** Max message length enforced by the evaluation service */
-  static readonly MAX_MESSAGE_LENGTH = 48;
-
-  async Log(
-    stack: Stack,
-    level: Level,
-    pkg: Package,
-    message: string
-  ): Promise<LogResponse> {
-    // Truncate message to satisfy the 48-char API constraint
-    const safeMessage = message.length > Logger.MAX_MESSAGE_LENGTH
-      ? message.slice(0, Logger.MAX_MESSAGE_LENGTH)
-      : message;
-
+  async Log(stack: Stack, level: Level, pkg: Package, message: string): Promise<LogResponse> {
+    const msg = message.length > Logger.MAX_MSG_LEN ? message.slice(0, Logger.MAX_MSG_LEN) : message;
     try {
-      const response = await this.client.post<LogResponse>(
-        "/evaluation-service/logs",
-        {
-          stack,
-          level,
-          package: pkg,
-          message: safeMessage,
-        }
-      );
-      return response.data;
+      const res = await this.client.post<LogResponse>("/evaluation-service/logs", {
+        stack,
+        level,
+        package: pkg,
+        message: msg,
+      });
+      return res.data;
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = error.response?.data;
-        throw new Error(
-          `[Logger] Failed to send log. HTTP ${status}: ${JSON.stringify(body)}`
-        );
+        throw new Error(`[Logger] HTTP ${error.response?.status}: ${JSON.stringify(error.response?.data)}`);
       }
-      throw new Error(`[Logger] Unexpected error: ${String(error)}`);
+      throw new Error(`[Logger] ${String(error)}`);
     }
   }
 }
 
-// ─── Factory & singleton ─────────────────────────────────────────────────────
+let _instance: Logger | null = null;
 
-let _loggerInstance: Logger | null = null;
-
-/**
- * Initialise the singleton logger.
- * Must be called once before using `Log()`.
- */
 export function initLogger(config: LoggerConfig): void {
-  _loggerInstance = new Logger(config);
+  _instance = new Logger(config);
 }
 
-/**
- * Reusable Log function — matches the required signature:
- *   Log(stack, level, package, message)
- *
- * Throws if initLogger() has not been called first.
- */
-export async function Log(
-  stack: Stack,
-  level: Level,
-  pkg: Package,
-  message: string
-): Promise<LogResponse> {
-  if (!_loggerInstance) {
-    throw new Error(
-      "[Logger] Logger not initialised. Call initLogger({ authToken }) first."
-    );
-  }
-  return _loggerInstance.Log(stack, level, pkg, message);
+export async function Log(stack: Stack, level: Level, pkg: Package, message: string): Promise<LogResponse> {
+  if (!_instance) throw new Error("[Logger] Call initLogger() first.");
+  return _instance.Log(stack, level, pkg, message);
 }
 
 export { Logger };
