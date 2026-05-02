@@ -1,7 +1,5 @@
 # Notification System Design
 
-**Author:** Archit Gupta — RA2311003010891
-
 ---
 
 ## Stage 1
